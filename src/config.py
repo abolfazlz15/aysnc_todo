@@ -1,5 +1,5 @@
 from pydantic_settings import BaseSettings
-
+from typing import Optional
 
 class Settings(BaseSettings):
     # general settings
@@ -10,7 +10,7 @@ class Settings(BaseSettings):
     database_username: str
     database_password: str
     database_name: str
-    database_url: str = None
+    database_url: Optional[str] = None
     
     # JWT Config
     secret_key: str
@@ -22,7 +22,7 @@ class Settings(BaseSettings):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.database_url = (
-            f"postgresql://{self.database_username}:{self.database_password}"
+            f"postgresql+asyncpg://{self.database_username}:{self.database_password}"
             f"@{self.database_hostname}/{self.database_name}"
         )
 
