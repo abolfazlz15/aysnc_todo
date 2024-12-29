@@ -7,6 +7,11 @@ class UserRepository:
     def __init__(self, session: AsyncSession):
         self.session = session
 
+    async def get_user_by_email(self, email: str) -> sa.RowMapping | None:
+        """Fetch a user by their ID."""
+        result = await self.session.execute(sa.select(User).where(User.email == email))
+        return result.fetchone()._mapping
+
     async def get_user_by_id(self, user_id: int) -> User | None:
         """Fetch a user by their ID."""
         result = await self.session.execute(sa.select(User).where(User.id == user_id))

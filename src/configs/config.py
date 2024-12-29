@@ -13,8 +13,8 @@ class Settings(BaseSettings):
     database_url: Optional[str] = None
     
     # JWT Config
-    # secret_key: str
-    # algorithm: str = "HS256"
+    secret_key: str
+    algorithm: str = "HS256"
     # access_token_lifetime: int = 3600  # seconds
     # reset_pass_access_token_lifetime: int = 10 * 60  # minutes
     # refresh_token_lifetime: int = 86400 * 365  # seconds
