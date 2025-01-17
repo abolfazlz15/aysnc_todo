@@ -1,26 +1,17 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 import sqlalchemy as sa
-from ..models.user import User
-
+from src.models.user import User
 
 class UserRepository:
     def __init__(self, session: AsyncSession):
         self.session = session
 
-    async def get_user_by_email(self, email: str) -> sa.RowMapping | None:
-        """Fetch a user by their ID."""
-        result = await self.session.execute(sa.select(User).where(User.email == email))
-        return result.fetchone()._mapping
-
-    async def get_user_by_id(self, user_id: int) -> User | None:
-        """Fetch a user by their ID."""
-        result = await self.session.execute(sa.select(User).where(User.id == user_id))
-        return result.fetchone()
-
     async def get_user_by_email(self, email: str) -> User | None:
         """Fetch a user by their email."""
-        result = await self.session.execute(sa.select(User).where(User.email == email))
-        return result.scalar_one_or_none()
+        result = await self.session.scalar(sa.select(User).where(User.email == email))
+        if result is None:
+            return None
+        return result
 
     async def create_user(self, fullname: str, email: str, password: str) -> User:
         """Create a new user."""

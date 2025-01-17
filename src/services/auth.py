@@ -20,9 +20,17 @@ settings = Settings()
 async def authenticate_user(session: AsyncSession, email: str, password: str) -> UserInDB | bool:
     user_dict = await UserRepository(session).get_user_by_email(email=email)
     if not user_dict:
-        return False  # No user found
-    user = UserInDB(**user_dict)
-    if not verify_password(password, user.hashed_password):
+        return False
+    user = UserInDB(
+        id=user_dict.id,
+        fullname=user_dict.fullname,
+        email=user_dict.email,
+        is_active=user_dict.is_active,
+        created_at=user_dict.created_at,
+        updated_at=user_dict.updated_at,
+        password=user_dict.password,
+    )
+    if not verify_password(password, user.password):
         return False
     return user
 
