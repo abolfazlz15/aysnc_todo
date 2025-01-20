@@ -1,4 +1,3 @@
-
 from datetime import datetime, timedelta, timezone
 from typing import Annotated
 
@@ -9,19 +8,19 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.configs.config import Settings
 from src.repositories.user_repository import UserRepository
-from src.schemas.auth import TokenData
-from src.schemas.user import User, UserInDB
+from src.schemas.auth import TokenInputDataSchema
+from src.schemas.user import UserSchema, UserInDBSchema
 from src.utils.security import verify_password
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
 settings = Settings() 
 
-async def authenticate_user(session: AsyncSession, email: str, password: str) -> UserInDB | bool:
+async def authenticate_user(session: AsyncSession, email: str, password: str) -> UserInDBSchema | bool:
     user_dict = await UserRepository(session).get_user_by_email(email=email)
     if not user_dict:
         return False
-    user = UserInDB(
+    user = UserInDBSchema(
         id=user_dict.id,
         fullname=user_dict.fullname,
         email=user_dict.email,
@@ -57,18 +56,18 @@ async def get_current_user(session: AsyncSession, token: Annotated[str, Depends(
         email: str = payload.get("sub")
         if email is None:
             raise credentials_exception
-        token_data = TokenData(email=email)
+        token_data = TokenInputDataSchema(email=email)
     except jwt.InvalidTokenError:
         raise credentials_exception
     user_dict = await UserRepository(session).get_user_by_email(session, email=token_data.email)
-    user = UserInDB(**user_dict)
+    user = UserInDBSchema(**user_dict)
     if user is None:
         raise credentials_exception
     return user
 
 
 async def get_current_active_user(
-    current_user: Annotated[User, Depends(get_current_user)],
+    current_user: Annotated[UserSchema, Depends(get_current_user)],
 ):
     if not current_user.is_active:
         raise HTTPException(status_code=400, detail="Inactive user")

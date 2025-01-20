@@ -1,8 +1,9 @@
 from datetime import datetime
+
 from pydantic import BaseModel
 
 
-class User(BaseModel):
+class UserSchema(BaseModel):
     id: int
     fullname: str
     email: str
@@ -10,6 +11,5 @@ class User(BaseModel):
     created_at: datetime
     updated_at: datetime
 
-
-class UserInDB(User):
+class UserInDBSchema(UserSchema):
     password: str
