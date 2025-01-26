@@ -8,7 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.configs.config import Settings
 from src.repositories.user_repository import UserRepository
-from src.schemas.auth import TokenInputDataSchema
+from src.schemas.auth import AccessTokenInputDataSchema
 from src.schemas.user import UserSchema, UserInDBSchema
 from src.utils.security import verify_password
 
@@ -44,6 +44,25 @@ def create_access_token(data: dict, expires_delta: timedelta | None = None) -> s
     encoded_jwt = jwt.encode(to_encode, settings.secret_key, algorithm=settings.algorithm)
     return encoded_jwt
 
+def create_refresh_token(data: dict, expires_delta: timedelta | None = None) -> str:
+    to_encode = data.copy()
+    if expires_delta:
+        expire = datetime.now(timezone.utc) + expires_delta
+    else:
+        expire = datetime.now(timezone.utc) + timedelta(minutes=15)
+    to_encode.update({"exp": expire})
+    encoded_jwt = jwt.encode(to_encode, settings.secret_key, algorithm=settings.algorithm)
+    return encoded_jwt
+
+def verify_token(token: str):
+    """Verify a token."""
+    try:
+        decoded = jwt.decode(token, settings.secret_key, algorithms=["HS256"])
+        return decoded
+    except jwt.ExpiredSignatureError:
+        raise ValueError("Token has expired")
+    except jwt.InvalidTokenError:
+        raise ValueError("Invalid token")
 
 async def get_current_user(session: AsyncSession, token: Annotated[str, Depends(oauth2_scheme)]):
     credentials_exception = HTTPException(
@@ -56,7 +75,7 @@ async def get_current_user(session: AsyncSession, token: Annotated[str, Depends(
         email: str = payload.get("sub")
         if email is None:
             raise credentials_exception
-        token_data = TokenInputDataSchema(email=email)
+        token_data = AccessTokenInputDataSchema(email=email)
     except jwt.InvalidTokenError:
         raise credentials_exception
     user_dict = await UserRepository(session).get_user_by_email(session, email=token_data.email)
