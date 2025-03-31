@@ -7,8 +7,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.configs.config import Settings
 from src.configs.database import get_db
-from src.schemas.auth import TokenSchema, RefreshTokenSchema
-from src.services.auth import authenticate_user, create_access_token, verify_token
+from src.schemas.auth import RefreshTokenSchema, TokenSchema
+from src.schemas.user import UserInDBSchema
+from src.services.auth import (authenticate_user, create_access_token,
+                               get_current_user)
+from src.services.refresh_token import RefreshTokenService
 
 router = APIRouter(
     prefix="/auth",
@@ -30,11 +33,11 @@ async def login_for_access_token(
             headers={"WWW-Authenticate": "Bearer"},
         )
     access_token_expires = timedelta(minutes=settings.access_token_lifetime)
-    refresh_token_expires = timedelta(minutes=2)
+    refresh_token_expires = timedelta(minutes=settings.refresh_token_lifetime)
     access_token = create_access_token(
         data={"sub": user.email}, expires_delta=access_token_expires
     )
-    refresh_token = create_access_token(
+    refresh_token = RefreshTokenService.create_refresh_token(
         data={"sub": user.email},
         expires_delta=refresh_token_expires,
     )
@@ -47,9 +50,13 @@ async def login_for_access_token(
 @router.post("/token/refresh/", response_model=TokenSchema, name="user:login")
 async def get_refresh_token(
     refresh_token: RefreshTokenSchema,
+    db: AsyncSession = Depends(get_db),
 ) -> TokenSchema:
     try:
-        payload = verify_token(refresh_token.refresh_token)
+        payload = await RefreshTokenService().verify_refresh_token(
+            token=refresh_token.refresh_token,
+            session=db,
+        )
     except ValueError:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -63,3 +70,9 @@ async def get_refresh_token(
         access_token=new_access_token,
         token_type="bearer",
     )
+
+
+@router.get('test', response_model=dict, name="user:test_token")
+def test_token(current_user: UserInDBSchema = Depends(get_current_user)) -> dict:
+    return {'message': f'test token {current_user.email}'}
+
