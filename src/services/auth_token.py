@@ -10,7 +10,7 @@ from src.models.jwt import BlackListRefreshToken
 
 settings = Settings()
 
-class RefreshTokenService:
+class AuthTokenService:
     @staticmethod
     def create_refresh_token(data: dict, expires_delta: timedelta | None = None) -> str:
         """Generate a refresh token."""
@@ -45,3 +45,13 @@ class RefreshTokenService:
             return payload
         except (jwt.InvalidTokenError, jwt.ExpiredSignatureError):
             raise ValueError("Invalid token")
+
+    @staticmethod
+    def create_access_token(data: dict, expires_delta: timedelta | None = None) -> str:
+        to_encode = data.copy()
+        if expires_delta:
+            expire = datetime.now(timezone.utc) + expires_delta
+        else:
+            expire = datetime.now(timezone.utc) + timedelta(minutes=15)
+        to_encode.update({"exp": expire})
+        return jwt.encode(to_encode, settings.secret_key, algorithm=settings.algorithm)

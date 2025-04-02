@@ -9,9 +9,8 @@ from src.configs.config import Settings
 from src.configs.database import get_db
 from src.schemas.auth import RefreshTokenSchema, TokenSchema
 from src.schemas.user import UserInDBSchema
-from src.services.auth import (authenticate_user, create_access_token,
-                               get_current_user)
-from src.services.refresh_token import RefreshTokenService
+from src.services.auth import authenticate_user, get_current_active_user
+from src.services.auth_token import AuthTokenService
 
 router = APIRouter(
     prefix="/auth",
@@ -34,10 +33,10 @@ async def login_for_access_token(
         )
     access_token_expires = timedelta(minutes=settings.access_token_lifetime)
     refresh_token_expires = timedelta(minutes=settings.refresh_token_lifetime)
-    access_token = create_access_token(
+    access_token = AuthTokenService.create_access_token(
         data={"sub": user.email}, expires_delta=access_token_expires
     )
-    refresh_token = RefreshTokenService.create_refresh_token(
+    refresh_token = AuthTokenService.create_refresh_token(
         data={"sub": user.email},
         expires_delta=refresh_token_expires,
     )
@@ -53,7 +52,7 @@ async def get_refresh_token(
     db: AsyncSession = Depends(get_db),
 ) -> TokenSchema:
     try:
-        payload = await RefreshTokenService().verify_refresh_token(
+        payload = await AuthTokenService().verify_refresh_token(
             token=refresh_token.refresh_token,
             session=db,
         )
@@ -64,7 +63,7 @@ async def get_refresh_token(
         )
     if not payload:
         raise HTTPException(status_code=401, detail="Invalid refresh token")
-    new_access_token = create_access_token({"sub": payload["sub"]})
+    new_access_token = AuthTokenService.create_access_token({"sub": payload["sub"]})
     return TokenSchema(
         refresh_token=refresh_token.refresh_token,
         access_token=new_access_token,
@@ -73,6 +72,6 @@ async def get_refresh_token(
 
 
 @router.get('test', response_model=dict, name="user:test_token")
-def test_token(current_user: UserInDBSchema = Depends(get_current_user)) -> dict:
+def test_token(current_user: UserInDBSchema = Depends(get_current_active_user)) -> dict:
     return {'message': f'test token {current_user.email}'}
 
