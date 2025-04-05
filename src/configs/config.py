@@ -1,6 +1,5 @@
-from datetime import timedelta
 from typing import Optional
-from pydantic import field_validator
+
 from pydantic_settings import BaseSettings
 
 
@@ -19,19 +18,9 @@ class Settings(BaseSettings):
     secret_key: str
     algorithm: str = "HS256"
     access_token_lifetime: int = 3600  # seconds
-    refresh_token_lifetime: timedelta = timedelta(days=20)  # 20 days
+    refresh_token_lifetime: int = 20  # 20 days
     # reset_pass_access_token_lifetime: int = 10 * 60  # minutes
 
-    @field_validator("refresh_token_lifetime", mode="before")
-    def parse_refresh_token_lifetime(cls, value):
-        if isinstance(value, str):
-            # Convert string to integer days, then to timedelta
-            try:
-                days = int(value)
-                return timedelta(days=days)
-            except ValueError:
-                raise ValueError(f"Invalid refresh_token_lifetime: {value}")
-        return value
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)

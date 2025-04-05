@@ -7,9 +7,12 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.configs.config import Settings
 from src.configs.database import get_db
+from src.models.jwt import BlackListRefreshToken
 from src.repositories.user_repository import UserRepository
 from src.schemas.auth import AccessTokenInputDataSchema
 from src.schemas.user import UserInDBSchema, UserSchema
+from src.services.auth_token import AuthTokenService
+from src.utils.exceptions import TokenAlreadyRevoked, TokenInvalid
 from src.utils.security import verify_password
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/login")
@@ -73,3 +76,16 @@ async def get_current_active_user(
     if not current_user.is_active:
         raise HTTPException(status_code=400, detail="Inactive user")
     return current_user
+
+
+async def logout_user(refresh_token: str, session: AsyncSession, user_id: int) -> None:
+    token_service = AuthTokenService()
+    try:
+        payload = jwt.decode(refresh_token, settings.secret_key, algorithms=["HS256"])
+        if await token_service.is_token_revoked(session, payload["jti"]):
+            raise TokenAlreadyRevoked("token already revoked")
+        await token_service.revoke_refresh_token(session, payload["jti"], user_id=user_id)
+    except KeyError:
+        ... # TODO after config logging system add log here
+    except jwt.exceptions.InvalidSignatureError:
+        raise TokenInvalid("invalid token")
