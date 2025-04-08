@@ -18,7 +18,7 @@ class UserRepository:
         new_user = User(fullname=fullname, email=email, password=password)
         self.session.add(new_user)
         await self.session.commit()
-        await self.session.refresh(new_user) 
+        await self.session.refresh(new_user)
         return new_user
 
     async def update_user(self, user_id: int, **kwargs) -> User | None:

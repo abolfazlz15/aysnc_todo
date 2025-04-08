@@ -7,13 +7,12 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.configs.config import Settings
 from src.configs.database import get_db
-from src.models.jwt import BlackListRefreshToken
 from src.repositories.user_repository import UserRepository
-from src.schemas.auth import AccessTokenInputDataSchema
+from src.schemas.auth import AccessTokenInputDataSchema, ChangePasswordIn
 from src.schemas.user import UserInDBSchema, UserSchema
 from src.services.auth_token import AuthTokenService
 from src.utils.exceptions import TokenAlreadyRevoked, TokenInvalid
-from src.utils.security import verify_password
+from src.utils.security import get_password_hash, verify_password
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/login")
 
@@ -89,3 +88,16 @@ async def logout_user(refresh_token: str, session: AsyncSession, user_id: int) -
         ... # TODO after config logging system add log here
     except jwt.exceptions.InvalidSignatureError:
         raise TokenInvalid("invalid token")
+    
+
+async def change_password(
+        user: UserInDBSchema,
+        password_data: ChangePasswordIn,
+        session: AsyncSession,
+    ) -> bool:
+    if not verify_password(password_data.current_password, user.password):
+        raise ValueError("Old password is incorrect")
+
+    hashed_new_password = get_password_hash(password_data.new_password)
+    updated_user = await UserRepository(session).update_user(user.id, password=hashed_new_password)
+    return bool(updated_user)
