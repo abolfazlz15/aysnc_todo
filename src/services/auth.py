@@ -9,7 +9,7 @@ from src.configs.config import Settings
 from src.configs.database import get_db
 from src.repositories.user_repository import UserRepository
 from src.schemas.auth import AccessTokenInputDataSchema, ChangePasswordIn
-from src.schemas.user import UserInDBSchema, UserSchema
+from src.schemas.user import UserInDBSchema, UserFullDataSchema
 from src.services.auth_token import AuthTokenService
 from src.utils.exceptions import TokenAlreadyRevoked, TokenInvalid
 from src.utils.security import get_password_hash, verify_password
@@ -18,10 +18,10 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/login")
 
 settings = Settings() 
 
-async def authenticate_user(session: AsyncSession, email: str, password: str) -> UserInDBSchema | bool:
+async def authenticate_user(session: AsyncSession, email: str, password: str) -> UserInDBSchema | None:
     user_dict = await UserRepository(session).get_user_by_email(email=email)
     if not user_dict:
-        return False
+        return None
     user = UserInDBSchema(
         id=user_dict.id,
         fullname=user_dict.fullname,
@@ -32,7 +32,7 @@ async def authenticate_user(session: AsyncSession, email: str, password: str) ->
         password=user_dict.password,
     )
     if not verify_password(password, user.password):
-        return False
+        return None
     return user
 
 
@@ -70,7 +70,7 @@ async def get_current_user(
 
 
 async def get_current_active_user(
-    current_user: Annotated[UserSchema, Depends(get_current_user)],
+    current_user: Annotated[UserFullDataSchema, Depends(get_current_user)],
 ) -> UserInDBSchema:
     if not current_user.is_active:
         raise HTTPException(status_code=400, detail="Inactive user")
