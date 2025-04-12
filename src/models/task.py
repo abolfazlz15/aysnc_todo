@@ -13,6 +13,6 @@ class Task(Base):
     title: Mapped[str] = mapped_column()
     content: Mapped[str] = mapped_column(Text)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=func.now())
-    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=True)
     user_id: Mapped[int] = mapped_column(ForeignKey(User.id))
     status: Mapped[bool] = mapped_column(default=False)

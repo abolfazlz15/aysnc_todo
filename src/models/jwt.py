@@ -27,5 +27,5 @@ class BlackListRefreshToken(Base):
     jti: Mapped[str] = mapped_column()
 
     __table_args__ = (
-        Index("idx_user_jti", "user_id", "jti", postgresql_using="hash"),  
+        Index("idx_user_jti", "user_id", "jti"),  
     )
