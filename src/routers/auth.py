@@ -34,10 +34,10 @@ async def login_router(
             headers={"WWW-Authenticate": "Bearer"},
         )
     access_token = AuthTokenService.create_access_token(
-        data={"sub": user.email}, expires_delta=timedelta(minutes=settings.access_token_lifetime)
+        data={"sub": str(user.id)}, expires_delta=timedelta(minutes=settings.access_token_lifetime)
     )
     refresh_token = AuthTokenService.create_refresh_token(
-        data={"sub": user.email},
+        data={"sub": str(user.id)},
         expires_delta=timedelta(days=settings.refresh_token_lifetime),
     )
     return TokenSchema(

@@ -47,14 +47,14 @@ async def get_current_user(
     )
     try:
         payload = jwt.decode(token, settings.secret_key, algorithms=[settings.algorithm])
-        email: str = payload.get("sub")
-        if email is None:
+        user_id: str = payload.get("sub")
+        if user_id is None:
             raise credentials_exception
-        token_data = AccessTokenInputDataSchema(email=email)
+        token_data = AccessTokenInputDataSchema(user_id=user_id)
 
     except (jwt.InvalidTokenError, jwt.ExpiredSignatureError):
         raise credentials_exception
-    user_dict = await UserRepository(session).get_user_by_email(email=token_data.email)
+    user_dict = await UserRepository(session).get_user_by_id(id=token_data.user_id)
     user = UserInDBSchema(
         id=user_dict.id,
         fullname=user_dict.fullname,

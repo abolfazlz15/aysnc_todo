@@ -6,6 +6,13 @@ class UserRepository:
     def __init__(self, session: AsyncSession):
         self.session = session
 
+    async def get_user_by_id(self, id: int) -> User | None:
+        """Fetch a user by their id."""
+        result = await self.session.scalar(sa.select(User).where(User.id == id))
+        if result is None:
+            return None
+        return result
+
     async def get_user_by_email(self, email: str) -> User | None:
         """Fetch a user by their email."""
         result = await self.session.scalar(sa.select(User).where(User.email == email))

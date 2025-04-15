@@ -8,7 +8,7 @@ class TokenSchema(BaseModel):
 
 
 class AccessTokenInputDataSchema(BaseModel):
-    email: str | None = None
+    user_id: int
 
 
 class RefreshTokenSchema(BaseModel):
