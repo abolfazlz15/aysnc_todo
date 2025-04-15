@@ -1,7 +1,9 @@
 import sqlalchemy as sa
+from sqlalchemy import asc, desc
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.models.task import Task
+from src.utils.enums.task import TaskFieldEnum
 
 
 class TaskRepository:
@@ -20,3 +22,27 @@ class TaskRepository:
         await self.session.commit()
         await self.session.refresh(new_task)
         return new_task
+
+    async def get_task_list(
+        self,
+        user_id: int,
+        skip: int = 0,
+        limit: int = 20,
+        sort_by: TaskFieldEnum = TaskFieldEnum.CREATED_AT.value,
+        sort_order: str = "desc",
+        status: bool | None = None
+    ) -> list[Task]:
+        query = sa.select(Task.id, Task.title, Task.status).where(Task.user_id == user_id)
+        
+        if status is not None:
+            query = query.where(Task.status == status)
+            
+        if sort_order.lower() == "asc":
+            query = query.order_by(asc(getattr(Task, sort_by)))
+        else:
+            query = query.order_by(desc(getattr(Task, sort_by)))
+            
+        query = query.offset(skip).limit(limit)
+        
+        result = await self.session.execute(query)
+        return result.all()
