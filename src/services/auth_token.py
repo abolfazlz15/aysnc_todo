@@ -2,11 +2,10 @@ import uuid
 from datetime import datetime, timedelta, timezone
 
 import jwt
-import sqlalchemy as sa
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.configs.config import Settings
-from src.models.jwt import BlackListRefreshToken
+from src.repositories.token_repository import TokenRepository
 
 settings = Settings()
 
@@ -22,21 +21,15 @@ class AuthTokenService:
 
     @staticmethod
     async def revoke_refresh_token(session: AsyncSession, jti: str, user_id: int) -> None:
-        # TODO move database operation to repository
-        """Revoke a refresh token by marking it as revoked."""
-        blacklist_refresh_token = BlackListRefreshToken(
+        await TokenRepository(session).create_revoke_token(
+            token_jti=jti,
             user_id=user_id,
-            jti=jti,
-            revoked=True,
         )
-        session.add(blacklist_refresh_token)
-        await session.commit()
 
     @staticmethod
     async def is_token_revoked(session: AsyncSession, jti: str) -> bool:
-        # TODO move database operation to repository
         """Check if a refresh token is revoked."""
-        return True if await session.scalar(sa.select(BlackListRefreshToken).where(BlackListRefreshToken.jti == jti)) else False
+        return await TokenRepository(session).get_token_by_jti(token_jti=jti)
 
 
     async def verify_refresh_token(self, token: str, session: AsyncSession) -> dict:
