@@ -1,1 +1,1 @@
-# simple TODO app with FastAPI and SQlachemy
+# simple async TODO app with FastAPI and SQlachemy
