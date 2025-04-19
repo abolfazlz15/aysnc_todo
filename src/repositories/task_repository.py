@@ -46,3 +46,11 @@ class TaskRepository:
         
         result = await self.session.execute(query)
         return result.all()
+
+    async def delete_task(self, task_id: int, user_id: int) -> bool:
+        task_obj = await self.get_task_by_id(task_id=task_id, user_id=user_id)
+        if task_obj is None:
+            return False
+        await self.session.delete(task_obj)
+        await self.session.commit()
+        return True

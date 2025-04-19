@@ -9,8 +9,7 @@ class BaseTaskSchema(BaseModel):
 
 class TaskListSchema(BaseTaskSchema):
     id: int
-    class Config:
-        from_attributes = True
+
 class TaskCreateOutSchema(BaseTaskSchema):
     id: int
     content: str

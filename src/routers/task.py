@@ -9,13 +9,19 @@ from src.schemas.task import (BaseTaskSchema, TaskCreateOutSchema,
 from src.schemas.user import UserInDBSchema
 from src.services.auth import get_current_active_user
 
+
 router = APIRouter(
     prefix="/task",
     tags=["task"],
 )
 
 
-@router.post("/create/", response_model=TaskCreateOutSchema, name="task:create", status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/create/",
+    response_model=TaskCreateOutSchema,
+    name="task:create",
+    status_code=status.HTTP_201_CREATED,
+)
 async def create_task_router(
     task: BaseTaskSchema,
     current_user: UserInDBSchema = Depends(get_current_active_user),
@@ -29,7 +35,12 @@ async def create_task_router(
             detail="something went wrong",
         )
     
-@router.get("/detail/{task_id}/", response_model=TaskCreateOutSchema, name="task:get")
+@router.get(
+    "/detail/{task_id}/",
+    response_model=TaskCreateOutSchema,
+    name="task:get",
+    status_code=status.HTTP_200_OK,
+)
 async def get_task_router(
     task_id: int,
     current_user: UserInDBSchema = Depends(get_current_active_user),
@@ -42,7 +53,12 @@ async def get_task_router(
         detail="task not found",
     )
 
-@router.get("/user/", response_model=list[TaskListSchema], name="task:user_list")
+@router.get(
+    "/user/",
+    response_model=list[TaskListSchema],
+    name="task:user_list",
+    status_code=status.HTTP_200_OK,
+)
 async def get_user_task_list_router(
     skip: int = 0,
     limit: int = 20,
@@ -59,3 +75,20 @@ async def get_user_task_list_router(
         status_code=status.HTTP_404_NOT_FOUND,
         detail="task not found",
     )
+
+
+@router.delete(
+    "/delete/{task_id}/",
+    name="task:delete",
+    status_code=status.HTTP_204_NO_CONTENT,
+)
+async def delete_task_router(
+    task_id: int,
+    current_user: UserInDBSchema = Depends(get_current_active_user),
+    db: AsyncSession = Depends(get_db),
+) -> None:
+    if not await TaskRepository(db).delete_task(task_id=task_id, user_id=current_user.id):
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="task not found",
+        )
