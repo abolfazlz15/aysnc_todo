@@ -21,7 +21,11 @@ router = APIRouter(
 
 settings = Settings()
 
-@router.post("/login/", response_model=TokenSchema, name="auth:login")
+@router.post(
+    "/login/",
+    response_model=TokenSchema,
+    name="auth:login",
+)
 async def login_router(
     form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
     db: AsyncSession = Depends(get_db),
@@ -46,7 +50,11 @@ async def login_router(
         token_type="bearer",
     )
 
-@router.post("/token/refresh/", response_model=TokenSchema, name="auth:refresh_token")
+@router.post(
+    "/token/refresh/",
+    response_model=TokenSchema,
+    name="auth:refresh_token",
+)
 async def get_refresh_token_router(
     refresh_token: RefreshTokenSchema,
     db: AsyncSession = Depends(get_db),
@@ -70,7 +78,12 @@ async def get_refresh_token_router(
         token_type="bearer",
     )
 
-@router.post("/logout/", response_model=None, name="auth:logout", status_code=status.HTTP_200_OK)
+@router.post(
+    "/logout/",
+    response_model=None,
+    name="auth:logout",
+    status_code=status.HTTP_200_OK,
+)
 async def logout_user_router(
     refresh_token: RefreshTokenSchema,
     current_user: UserInDBSchema = Depends(get_current_active_user),
@@ -81,7 +94,7 @@ async def logout_user_router(
     except (TokenAlreadyRevoked, TokenInvalid) as exp:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exp))
 
-@router.post("/change-password/")
+@router.post("/change-password/") # TODO use response model
 async def change_password_router(
     user_new_password: ChangePasswordIn,
     current_user: UserInDBSchema = Depends(get_current_active_user),
@@ -94,10 +107,3 @@ async def change_password_router(
         return {'message': 'Your password has been successfully changed'}
     except ValueError as exp:
         raise HTTPException(status.HTTP_400_BAD_REQUEST, detail=str(exp))
-
-
-@router.get("/test", response_model=dict, name="auth:test_token")
-def test_token(current_user: UserInDBSchema = Depends(get_current_active_user)) -> dict:
-    return {"message": f"test token {current_user.email}"}
-
-
