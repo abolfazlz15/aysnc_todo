@@ -30,8 +30,8 @@ class TaskRepository:
         limit: int = 20,
         sort_by: TaskFieldEnum = TaskFieldEnum.CREATED_AT.value,
         sort_order: str = "desc",
-        status: bool | None = None
-    ) -> list[Task]:
+        status: bool | None = None,
+    ) -> list[tuple[Task, ...]]:
         query = sa.select(Task.id, Task.title, Task.status).where(Task.user_id == user_id)
         
         if status is not None:
@@ -54,3 +54,27 @@ class TaskRepository:
         await self.session.delete(task_obj)
         await self.session.commit()
         return True
+    
+    async def update_task(self, task_id: int, user_id: int, **kwargs) -> Task | None:
+        """
+        Task a user's fields.
+        
+        Args:
+            task_id: ID of the task to update.
+            kwargs: Fields to update (e.g., title, content, status).
+        
+        Returns:
+            The updated task object or None if the task doesn't exist.
+        """
+        stmt = sa.update(Task).where(
+            Task.id == task_id,
+            Task.user_id == user_id
+            ).values(
+                updated_at=sa.func.now(),
+                **kwargs,
+            ).returning(Task)
+        result = await self.session.execute(stmt)
+        updated_task = result.scalar_one_or_none()
+        if updated_task:
+            await self.session.commit()
+        return updated_task

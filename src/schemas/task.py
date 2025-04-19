@@ -10,6 +10,12 @@ class BaseTaskSchema(BaseModel):
 class TaskListSchema(BaseTaskSchema):
     id: int
 
+class TaskUpdateInSchema(BaseModel):
+    title: str | None = None
+    status: bool | None = None
+    content: str | None = None
+
+
 class TaskCreateOutSchema(BaseTaskSchema):
     id: int
     content: str

@@ -22,6 +22,7 @@ class AuthTokenService:
 
     @staticmethod
     async def revoke_refresh_token(session: AsyncSession, jti: str, user_id: int) -> None:
+        # TODO move database operation to repository
         """Revoke a refresh token by marking it as revoked."""
         blacklist_refresh_token = BlackListRefreshToken(
             user_id=user_id,
@@ -33,6 +34,7 @@ class AuthTokenService:
 
     @staticmethod
     async def is_token_revoked(session: AsyncSession, jti: str) -> bool:
+        # TODO move database operation to repository
         """Check if a refresh token is revoked."""
         return True if await session.scalar(sa.select(BlackListRefreshToken).where(BlackListRefreshToken.jti == jti)) else False
 
