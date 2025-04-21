@@ -94,7 +94,10 @@ async def logout_user_router(
     except (TokenAlreadyRevoked, TokenInvalid) as exp:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exp))
 
-@router.post("/change-password/") # TODO use response model
+@router.post(
+    "/change-password/",
+    response_model=dict,
+) # TODO use response model
 async def change_password_router(
     user_new_password: ChangePasswordIn,
     current_user: UserInDBSchema = Depends(get_current_active_user),

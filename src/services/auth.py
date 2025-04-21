@@ -1,3 +1,4 @@
+import logging
 from typing import Annotated
 
 import jwt
@@ -9,12 +10,13 @@ from src.configs.config import Settings
 from src.configs.database import get_db
 from src.repositories.user_repository import UserRepository
 from src.schemas.auth import AccessTokenInputDataSchema, ChangePasswordIn
-from src.schemas.user import UserInDBSchema, UserFullDataSchema
+from src.schemas.user import UserFullDataSchema, UserInDBSchema
 from src.services.auth_token import AuthTokenService
 from src.utils.exceptions import TokenAlreadyRevoked, TokenInvalid
 from src.utils.security import get_password_hash, verify_password
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/login")
+logger = logging.getLogger("custom_log")
 
 settings = Settings() 
 
@@ -84,8 +86,9 @@ async def logout_user(refresh_token: str, session: AsyncSession, user_id: int) -
         if await token_service.is_token_revoked(session, payload["jti"]):
             raise TokenAlreadyRevoked("token already revoked")
         await token_service.revoke_refresh_token(session, payload["jti"], user_id=user_id)
-    except KeyError:
-        ... # TODO after config logging system add log here
+    except KeyError as exc:
+        logger.error(f"KeyError, can not find jti key: {exc}")
+        raise TokenInvalid("invalid token")
     except jwt.exceptions.InvalidSignatureError:
         raise TokenInvalid("invalid token")
     
